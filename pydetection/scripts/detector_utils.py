@@ -1,8 +1,8 @@
 # coding=utf-8
 #================================================================
-#   Copyright (C) 2019 * Ltd. All rights reserved.
+#   Copyright (C) 2020 * Ltd. All rights reserved.
 #
-#   File name   :detector_utils.py
+#   File name   : detector_utils.py
 #   Author      : lyjsly
 #   Created date: 2020-04-26
 #   Description : functions for detector
