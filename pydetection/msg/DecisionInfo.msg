@@ -1,0 +1,1 @@
+bool can_shoot
