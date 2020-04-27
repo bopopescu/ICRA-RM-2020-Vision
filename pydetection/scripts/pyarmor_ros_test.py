@@ -1,7 +1,7 @@
 #! /home/lyjslay/py3env/bin python
 # coding=utf-8
 #================================================================
-#   Copyright (C) 2019 * Ltd. All rights reserved.
+#   Copyright (C) 2020 * Ltd. All rights reserved.
 #
 #   File name   : pyarmor_ros_test.py
 #   Author      : lyjsly
@@ -90,10 +90,10 @@ camera_matrix = np.array(([1750, 0, 356.3],
 dist_coefs = np.array([0, 0, 0, 0, 0], dtype=np.double)
 
 # create 3d coordinates at armor centre, axis which vertically crosses armor is 'z' axis
-object_3d_points = np.array(([-72, -32, 0], #xmin ymin 左上角
-		                    [-58, 32, 0],   #xmin ymax 左下角
-		                    [58, -32, 0],    #xmax ymax 右shang角
-		                    [72, 32, 0]), dtype=np.double)#xmax ymin 右xia
+object_3d_points = np.array(([-72, -32, 0], #xmin ymin left-top
+		             [-58, 32, 0],   #xmin ymax lef-bottom
+		             [58, -32, 0],    #xmax ymax right-top
+		             [72, 32, 0]), dtype=np.double)#xmax ymin right-bottom
 
 
 
@@ -128,8 +128,8 @@ class Detector(Process):
 
 		# inference concerned param
 		# self defined class can't be initialized in __init__() for pickle, should be inti in run()
-		self.cls_dict  = {1: 'front', 2: 'side', 3: 'back'}
-		self.pb_path   = './data/ssd_inception_v2_coco_trt.pb'
+		self.cls_dict  = {YOUR OWN CLASS DICT}
+		self.pb_path   = 'YOUR OWN PB FILE'
 		self.od_type   = 'ssd'
 		self.conf_th   = 0.8
 
