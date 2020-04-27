@@ -1,7 +1,7 @@
 #! /home/lyjslay/py3env/bin python
 # coding=utf-8
 #================================================================
-#   Copyright (C) 2019 * Ltd. All rights reserved.
+#   Copyright (C) 2020 * Ltd. All rights reserved.
 #
 #   File name   : gimctrl_utils.py
 #   Author      : lyjsly
