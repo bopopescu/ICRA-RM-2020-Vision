@@ -70,31 +70,22 @@ analysis:
 
 ################################ global variables ###################################
 
-# color and camera concerned param
+# color and camera parameters
 enemy_color = 'blue'
 
 # for enemy judgement and lightbar fliter
 if enemy_color == 'blue':
-	lower_enmclr = np.array([90,0,0])
-	lower_pnpclr = np.array([90,20,150])
-	upper_allclr = np.array([130,255,255])
+	lower_enmclr = BLUE_LOW_THRESH
+	lower_pnpclr = BLUE_LOW_THRESH
+	upper_allclr = BLUE_HIGH_THRESH
 if enemy_color == 'red':
-	lower_enmclr = np.array([0,20,100])
-	lower_pnpclr = np.array([0,50,150])
-	upper_allclr = np.array([20,255,255])
-
-# camera params that calculate by matlab
-camera_matrix = np.array(([1750, 0, 356.3],
-                         [0, 1756, 375.9],
-                         [0, 0, 1.0]), dtype=np.double)
-dist_coefs = np.array([0, 0, 0, 0, 0], dtype=np.double)
-
-# create 3d coordinates at armor centre, axis which vertically crosses armor is 'z' axis
-object_3d_points = np.array(([-72, -32, 0], #xmin ymin left-top
-		             [-58, 32, 0],   #xmin ymax lef-bottom
-		             [58, -32, 0],    #xmax ymax right-top
-		             [72, 32, 0]), dtype=np.double)#xmax ymin right-bottom
-
+	lower_enmclr = RED_LOW_THRESH
+	lower_pnpclr = RED_LOW_THRESH
+	upper_allclr = RED_HIGH_THRESH
+# camera parameters	
+camera_matrix = CAMERA_MATRIX
+dist_coefs = DIST_MATRIX
+object_3d_points = ARMOR_POINT_COORD
 
 
 
