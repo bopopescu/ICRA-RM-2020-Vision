@@ -1,7 +1,7 @@
 #! /home/lyjslay/py3env/bin python
 # coding=utf-8
 #================================================================
-#   Copyright (C) 2019 * Ltd. All rights reserved.
+#   Copyright (C) 2020 * Ltd. All rights reserved.
 #
 #   File name   : detect_ctrl.py
 #   Author      : lyjsly
@@ -204,7 +204,7 @@ def detect_and_pub(img, tf_sess, conf_th, od_type, pub, udetected_conut):
 		pitch, yaw = calc_xyz(roi_gray, box)
 		#set_fricwhl(True)
 		#yaw = yaw * (0.1 * np.exp(-np.square(yaw)/0.2048)/0.8021 + 0.08)
-		pub.publish(True, True, yaw*0.25, pitch*0.5)
+		pub.publish(True, True, yaw*0.5, pitch*0.7)
 		#pub_xyz.publish(x, y, z, 2, True)
 		rospy.loginfo(str(yaw)+str(pitch))
 		#rospy.loginfo(str(x)+str('  ')+str(z))
