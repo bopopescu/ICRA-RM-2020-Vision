@@ -1,7 +1,7 @@
 #! /home/lyjslay/py3env/bin python
 # coding=utf-8
 #================================================================
-#   Copyright (C) 2019 * Ltd. All rights reserved.
+#   Copyright (C) 2020 * Ltd. All rights reserved.
 #
 #   File name   : shared_ram.py
 #   Author      : lyjsly
@@ -34,8 +34,7 @@ import numpy
 from multiprocessing import RawArray
 import ctypes
 import mmap
-#logger = multiprocessing.log_to_stderr()
-#logger.setLevel(multiprocessing.SUBDEBUG)
+
 
 __shmdebug__ = False
 
@@ -106,238 +105,7 @@ def cpu_count():
 	except:
 		return multiprocessing.cpu_count()
 
-class LostExceptionType(Warning):
-	""" Warning issued when a unpicklable exception occurs.
-	"""
-	pass
 
-class SlaveException(Exception):
-	""" Represents an exception that has occured during a slave process 
-
-		Attributes
-		----------
-		reason : Exception, or subclass of Exception.
-			The underlining reason of the exception.
-			If the original exception can be pickled, the type of the exception
-			is preserved. Otherwise, a LostExceptionType warning is issued, and
-			reason is of type Exception.
-
-		traceback : str
-			The string version of the traceback that can be used to inspect the 
-			error.
-
-	"""
-	def __init__(self, reason, traceback):
-		if not isinstance(reason, Exception):
-			warnings.warn("Type information of Unpicklable exception %s is lost" % reason, LostExceptionType)
-			reason = Exception(reason)
-		self.reason = reason
-		self.traceback = traceback
-		Exception.__init__(self, "%s\n%s" % (str(reason), str(traceback)))
-
-class StopProcessGroup(Exception):
-	""" A special type of Exception. 
-		StopProcessGroup will terminate the slave process/thread 
-	"""
-	def __init__(self):
-		Exception.__init__(self, "StopProcessGroup")
-
-class ProcessGroup(object):
-	""" Monitoring a group of worker processes """
-	def __init__(self, backend, main, np, args=()):
-		self.Errors = backend.QueueFactory(1)
-		self._tls = backend.StorageFactory()
-		self.main = main
-		self.args = args
-		self.slaveguard = threading.Thread(target=self._slaveGuard)
-		self.errorguard = threading.Thread(target=self._errorGuard)
-		# _allDead has to be from backend because the slaves will check
-		# this variable via is_alive()
-		self._allDead = backend.EventFactory()
-		# each dead child releases one sempahore
-		# when all children are dead, will set _allDead event.
-		self.semaphore = threading.Semaphore(0)
-		self.JoinedProcesses = multiprocessing.RawValue('l')
-		# workers
-		self.P = [
-			backend.SlaveFactory(target=self._slaveMain,
-				args=(rank,)) \
-				for rank in range(np)
-			]
-		# nanny threads
-		self.N = [
-			threading.Thread(target=self._slaveNanny,
-				args=(rank, self.P[rank])) \
-				for rank in range(np)
-			]
-		return
-
-	def _slaveMain(self, rank):
-		self._tls.rank = rank
-		try:
-			self.main(self, *self.args)
-		except SlaveException as e:
-			raise RuntimError("slave exception shall never be caught by a slave")
-		except StopProcessGroup as e:
-			pass
-		except BaseException as e:
-			try:
-				# Put in the string version of the exception,
-				# Some of the Exception types in extension types are probably
-				# not picklable (thus can't be sent via a queue), 
-				# However, we don't use the extra information in customized
-				# Exception types anyways.
-				try:
-					pickle.dumps(e)
-				except Exception as ee:
-					e = str(e)
-
-				tb = traceback.format_exc()
-				self.Errors.put((e, tb), timeout=0)
-			except queue.Full:
-				pass
-		finally:
-			# making all slaves exit one after another
-			# on some Linuxes if many slaves (56+) access
-			# mmap randomly the termination of the slaves
-			# run into a deadlock.
-			while self.JoinedProcesses.value < rank:
-				continue
-			pass
-
-	def killall(self):
-		for p in self.P:
-			if not p.is_alive(): continue
-			try:
-				if isinstance(p, threading.Thread):
-					# will die on next self.get() / self.put()
-					p.join()
-				else:
-					os.kill(p._popen.pid, 5)
-			except Exception as e:
-				print(e)
-				continue
-
-	def _errorGuard(self):
-		# this guard will kill every child if
-		# an error is observed. We watch for this every 0.5 seconds
-		# (errors do not happen very often)
-		# if _allDead is set or killall is emitted, this will end immediately.
-		while self.is_alive():
-			if not self.Errors.empty():
-				self.killall()
-				break
-			# for python 2.6.x wait returns None XXX
-			self._allDead.wait(timeout=0.5)
-
-	def _slaveNanny(self, rank, process):
-		process.join()
-		if isinstance(process, threading.Thread):
-			pass
-		else:
-			if process.exitcode < 0 and process.exitcode != -5:
-				e = Exception("slave process %d killed by signal %d" % (rank, -
-					process.exitcode))
-				try:
-					self.Errors.put((e, ""), timeout=0)
-				except queue.Full:
-					pass
-		self.semaphore.release() 
-
-	def _slaveGuard(self):
-		# this guard will wait till all children are dead.
-		for x in self.N:
-			self.semaphore.acquire()
-			self.JoinedProcesses.value = self.JoinedProcesses.value + 1
-
-		# we then notify the _allDead event
-		self._allDead.set()
-
-	def start(self):
-		self.JoinedProcesses.value = 0
-		self._allDead.clear()
-
-		# collect the garbages before forking so that the left-over
-		# junk won't throw out assertion errors due to
-		# wrong pid in multiprocess.heap
-		gc.collect()
-
-		# disable warnings for subprocesses
-		# this may workaround some pyzmq deadlocks, but still needs to be tested.
-		# c.f. https://github.com/ipython/ipython/issues/6109 
-
-		with warnings.catch_warnings():
-			warnings.simplefilter("ignore")
-			for x in self.P:
-				x.start()
-
-		# p is alive from the moment start returns.
-		# thus we can join them immediately after start returns.
-		# guardMain will check if the slave has been
-		# killed by the os, and simulate an error if so.
-		for x in self.N:
-			x.start()
-		self.errorguard.start()
-		self.slaveguard.start()
-
-	def get_exception(self):
-		# give it a bit of slack in case the error is not yet posted.
-		# XXX: why does this happen?
-		exp = self.Errors.get(timeout=1)
-		return SlaveException(*exp)
-
-	def get(self, Q):
-		""" Protected get. Get an item from Q.
-			Will block. but if the process group has errors,
-			raise an StopProcessGroup exception.
-
-			A slave process will terminate upon StopProcessGroup.
-			The master process shall read the error from the process group.
-
-		"""
-		while self.Errors.empty():
-			try:
-				return Q.get(timeout=1)
-			except queue.Empty:
-				# check if the process group is dead
-				if not self.is_alive():
-					# todo : can be graceful, in which
-					# case the last item shall have been
-					# flushed to Q.
-					try:
-						return Q.get(timeout=0)
-					except queue.Empty:
-						raise StopProcessGroup
-				else:
-					continue
-		else:
-			raise StopProcessGroup
-
-	def put(self, Q, item):
-		while self.Errors.empty():
-			try:
-				Q.put(item, timeout=1)
-				return
-			except queue.Full:
-				if not self.is_alive():
-					raise StopProcessGroup
-				else:
-					continue
-		else:
-			raise StopProcessGroup
-
-	def is_alive(self):
-		return not self._allDead.is_set()
-
-	def join(self):
-		self._allDead.wait()
-		for x in self.N:
-			x.join()
-
-		self.errorguard.join()
-		self.slaveguard.join()
-		if not self.Errors.empty():
-			raise SlaveException(*self.Errors.get())
 
 class Ordered(object):
 	def __init__(self, backend):
@@ -400,15 +168,6 @@ class background(object):
 		function : callable, the function to call
 		*args   : positional arguments
 		**kwargs : keyward arguments
-
-		Examples
-		--------
-
-		>>> def function(*args, **kwargs):
-		>>>		pass
-		>>> bg = background(function, *args, **kwargs)
-		>>> rt = bg.wait()
-
 	"""
 	def __init__(self, function, *args, **kwargs):
 			
@@ -477,14 +236,6 @@ class MapReduce(object):
 		Notes
 		-----
 		Always wrap the call to :py:meth:`map` in a context manager ('with') block.
-
-		Examples
-		--------
-
-		>>> with sharedmem.MapReduce() as pool:
-		>>>		def work(i):
-		>>>			return i + pool.local.rank
-		>>>		pool.map(work, range(10))
 	"""
 	def __init__(self, backend=ProcessBackend, np=None):
 		self.backend = backend
