@@ -283,7 +283,6 @@ class CVToolbox {
 
   image_transport::CameraSubscriber camera_sub_;
   bool get_img_info_;
-  sensor_msgs::CameraInfo camera_info_;
 };
 } //namespace roborts_detection
 
