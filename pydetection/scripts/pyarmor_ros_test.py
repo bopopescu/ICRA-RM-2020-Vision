@@ -33,7 +33,7 @@ from roborts_msgs.srv import FricWhl, ShootCmd
 
 ##################################### TEST LOGS ######################################
 '''
-@@@@@@@@encounter one error:
+@@@@@@@@ 3.22 encounter one error:
 	tracker_box[-1, 324, 267, 120]
 	detecting
 	detector_box[300, -10, 477, 236]
@@ -49,7 +49,7 @@ analysis:
 	the boundingbox by detector locate at the corner,so after resort_board_info() fix it ,the box may have negetive nums,cv2.rectangle cant draw it
 
 
-@@@@@@@@encounter one error:
+@@@@@@@@ 4.6 encounter one error:
 Traceback (most recent call last):
   File "/home/lyjslay/anaconda3/envs/tensorflow1/lib/python3.7/multiprocessing/process.py", line 297, in _bootstrap
     self.run()
