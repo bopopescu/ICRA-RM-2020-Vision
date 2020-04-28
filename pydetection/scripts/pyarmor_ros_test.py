@@ -24,6 +24,7 @@ from detector_utils import *
 from gimctrl_utils import *
 from sensor_msgs.msg import Image
 from roborts_msgs.msg import GimbalAngle
+from roborts_msgs.msg import DecisionInfo
 from roborts_msgs.srv import FricWhl, ShootCmd
 
 
@@ -149,10 +150,10 @@ class ArmorDetectionNode():
 		self._ctrlinfo_pub = rospy.Publisher('cmd_gimbal_angle', GimbalAngle, queue_size=1, tcp_nodelay=True)
 		#self._decision_pub = rospy.Publisher('topic_name',MSGNAME,queue_size=1, tcp_nodelay=True)
 		self._image_sub = rospy.Subscriber('camera/image', Image, self._update_images, tcp_nodelay=True)
-		#self._ctrlpower_sub = rospy.Subscriber('topic_name',MSGNAME, self._update_ctrlpower, tcp_nodelay=True )
+		self._ctrlpower_sub = rospy.Subscriber('cmd_ctrl_power', DecisonInfo, self._update_ctrlpower, tcp_nodelay=True )
 		
-		self._fricwhl_client = rospy.ServiceProxy("cmd_fric_wheel",FricWhl)
-		self._shoot_client = rospy.ServiceProxy("cmd_shoot",ShootCmd)
+		self._fricwhl_client = rospy.ServiceProxy("cmd_fric_wheel", FricWhl)
+		self._shoot_client = rospy.ServiceProxy("cmd_shoot", ShootCmd)
 		
 		self._can_ctrl = True
 		undet_count = 40
