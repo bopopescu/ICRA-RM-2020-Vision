@@ -74,7 +74,7 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  Pydetection
+  pydetection
   sensor_msgs
 )
 
