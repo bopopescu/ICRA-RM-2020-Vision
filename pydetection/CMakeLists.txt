@@ -54,6 +54,7 @@ add_message_files(
   FILES
   PyArmorInfo.msg
   DecisionInfo.msg
+  GimbalAngle.msg
 )
 
 ## Generate services in the 'srv' folder
