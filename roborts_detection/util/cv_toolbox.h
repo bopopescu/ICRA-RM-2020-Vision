@@ -85,7 +85,7 @@ class CVToolbox {
       ROS_WARN("Can not get camera matrix info, because the first frame data wasn't received");
       return -1;
     }
-    k_matrix = cv::Mat(3, 3, CV_64F, cam_matrix).clone();
+    k_matrix = cv::Mat(3, 3, CV_64F, cam_matrix);
     return 0;
   }
 
@@ -94,7 +94,7 @@ class CVToolbox {
       ROS_WARN("Can not get camera distortion info, because the first frame data wasn't received");
       return -1;
     }
-    distortion = cv::Mat(5, 1, CV_64F, cam_dist).clone();
+    distortion = cv::Mat(5, 1, CV_64F, cam_dist);
     return 0;
   }
 
@@ -271,8 +271,8 @@ class CVToolbox {
       cv::line(img, vertex[i], vertex[(i + 1) % 4], color, thickness);
   }
  private:
-  float cam_matrix[3][3] = {{1750.0,0.0,356.3}, {0.0,1756.0,375.9}, {0.0,0.0,1.0}}
-  float cam_dist[5][1] = {{0.0},{0.0},{0.0},{0.0},{0.0}}
+  double cam_matrix[3][3] = {{1750.0,0.0,356.3}, {0.0,1756.0,375.9}, {0.0,0.0,1.0}}
+  double cam_dist[5][1] = {{0.0},{0.0},{0.0},{0.0},{0.0}}
   std::vector<cv::Mat> image_buffer_;
   std::vector<BufferState> buffer_state_;
   int latest_index_;
