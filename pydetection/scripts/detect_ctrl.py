@@ -57,20 +57,6 @@ object_3d_points = ARMOR_POINT_COORD
 
 
 
-def read_label_map(path_to_labels):
-
-
-    category_index = label_map_util.create_category_index_from_labelmap(path_to_labels)
-    
-    cls_dict = {int(x['id']): x['name'] for x in category_index.values()}
-    
-    num_classes = max(c for c in cls_dict.keys()) + 1
-
-    return {i: cls_dict.get(i, 'CLS{}'.format(i)) for i in range(num_classes)}
-
-
-
-
 def load_trt_pb(pb_path):
 
     trt_graph_def = tf.GraphDef()
