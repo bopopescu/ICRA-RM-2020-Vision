@@ -47,7 +47,6 @@ object_3d_points = ARMOR_POINT_COORD
 
 class Detector(Process):
 	
-
 	def __init__(self, name, detecting, tracking, initracker, boundingbox, is_enemy, flag, image_in):
 		
 		super().__init__()
@@ -66,8 +65,6 @@ class Detector(Process):
 		self.od_type   = 'ssd'
 		self.conf_th   = 0.8
 
-
-
 	def run(self):
 		
 		trt_graph = load_trt_pb(self.pb_path)
@@ -79,8 +76,7 @@ class Detector(Process):
 			roi_gray, box, cls, is_enemy = detect(img, tf_sess, self.conf_th, self.od_type)
 			
 			if is_enemy:
-				self.boundingbox[:] = [box[1], box[0], box[3]-box[1], box[2]-box[0]] # xmin,ymin,width,height
-
+				self.boundingbox[:] = [box[1], box[0], box[3]-box[1], box[2]-box[0]]
 				self.detecting.value = False
 				self.initracker.value = True
 				self.tracking.value = False
@@ -93,15 +89,12 @@ class Detector(Process):
 
 
 
-
-
 class Tracker(Process):
 	
 	def __init__(self, name, detecting, tracking, initracker, boundingbox, is_enemy, flag, image_in):
 		
 		super().__init__()
 		self.name = name 
-	
 		self.detecting   = detecting
 		self.tracking    = tracking
 		self.initracker  = initracker
@@ -109,7 +102,6 @@ class Tracker(Process):
 		self.is_enemy    = is_enemy
 		self.flag        = flag
 		self.image_in    = image_in
-
 
 
 	def run(self):
@@ -144,9 +136,6 @@ class Tracker(Process):
 					self.detecting.value = True
 					self.initracker.value = False
 					self.tracking.value = False
-
-
-
 
 
 class ArmorDetectionNode():
