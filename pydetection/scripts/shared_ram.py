@@ -105,10 +105,10 @@ class ProcessBackend:
 	  LockFactory = staticmethod(multiprocessing.Lock)
 
 	  @staticmethod
-	  def SlaveFactory(*args, **kwargs):
-		slave = multiprocessing.Process(*args, **kwargs)
-		slave.daemon = True
-		return slave
+	  def SubordinateFactory(*args, **kwargs):
+		subordinate = multiprocessing.Process(*args, **kwargs)
+		subordinate.daemon = True
+		return subordinate
 	  @staticmethod
 	  def StorageFactory():
 		  return lambda:None
@@ -122,9 +122,9 @@ class background(object):
 		backend = kwargs.pop('backend', ProcessBackend)
 
 		self.result = backend.QueueFactory(1)
-		self.slave = backend.SlaveFactory(target=self._closure, 
+		self.subordinate = backend.SubordinateFactory(target=self._closure, 
 				args=(function, args, kwargs, self.result))
-		self.slave.start()
+		self.subordinate.start()
 
 	def _closure(self, function, args, kwargs, result):
 		try:
@@ -136,11 +136,11 @@ class background(object):
 
 	def wait(self):
 		e, r = self.result.get()
-		self.slave.join()
-		self.slave = None
+		self.subordinate.join()
+		self.subordinate = None
 		self.result = None
 		if isinstance(e, Exception):
-			raise SlaveException(e, r)
+			raise SubordinateException(e, r)
 		return r
 
 	
